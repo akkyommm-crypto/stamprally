@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>修行ログ・プロ</title>
+    <style>
+        :root {
+            --main-color: #2c3e50;
+            --accent-color: #3498db;
+            --stamp-color: #e74c3c;
+            --bg-color: #f2f4f7;
+            --sun-color: #e74c3c;
+            --sat-color: #3498db;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 450px; background: white; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); overflow: hidden; position: relative; min-height: 90vh; display: flex; flex-direction: column; }
+        
+        /* ヘッダー */
+        .header { background: var(--main-color); color: white; padding: 20px 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .nav-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .month-title { text-align: center; flex-grow: 1; }
+        .month-title h2 { margin: 0; font-size: 1.1rem; }
+        .streak-count { font-size: 0.75rem; background: #f39c12; padding: 2px 8px; border-radius: 10px; margin-top: 4px; display: inline-block; font-weight: bold; }
+
+        /* カレンダー */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #fff; padding: 10px; border-bottom: 1px solid #eee; }
+        .day-label { text-align: center; font-size: 0.7rem; color: #aaa; padding: 5px 0; font-weight: bold; }
+        .day { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 0.85rem; border-radius: 8px; cursor: pointer; }
+        .day.today { background: #e8f4fd; color: var(--accent-color); font-weight: bold; }
+        .day.sun { color: var(--sun-color); }
+        .day.sat { color: var(--sat-color); }
+        .stamp-mark { font-size: 1.5rem; position: absolute; display: flex; align-items: center; justify-content: center; z-index: 1; }
+
+        /* タスク・入力エリア */
+        .content-area { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; }
+        .task-section { padding: 15px; }
+        .task-item { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 12px; border-radius: 12px; border-left: 5px solid #ddd; }
+        .task-item.checked { border-left-color: var(--accent-color); background: #eef7ff; }
+        .task-item input { width: 20px; height: 20px; margin-right: 12px; }
+
+        .log-inputs { padding: 0 15px 15px; background: #fff; }
+        .rating-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .rating-btn { border: 2px solid #ddd; background: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; }
+        .rating-btn.active { border-color: var(--accent-color); background: var(--accent-color); color: white; }
+        .memo-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+
+        .actions { padding: 15px; }
+        .complete-btn { width: 100%; padding: 16px; border: none; background: var(--stamp-color); color: white; border-radius: 16px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); }
+        .complete-btn:disabled { background: #ccc; box-shadow: none; opacity: 0.6; }
+
+        /* 設定ボタン（右下） */
+        .fab { position: absolute; bottom: 20px; right: 20px; width: 54px; height: 54px; background: var(--main-color); color: white; border: none; border-radius: 50%; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
+
+        /* モーダル */
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <button class="nav-btn" onclick="app.changeMonth(-1)">❮</button>
+        <div class="month-title">
+            <h2 id="monthDisplay">Loading...</h2>
+            <div class="streak-count">🔥 継続: <span id="streakNum">0</span>日</div>
+        </div>
+        <button class="nav-btn" onclick="app.changeMonth(1)">❯</button>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid">
+        <div class="day-label">日</div><div class="day-label">月</div><div class="day-label">火</div>
+        <div class="day-label">水</div><div class="day-label">木</div><div class="day-label">金</div><div class="day-label">土</div>
+    </div>
+
+    <div class="content-area">
+        <div class="task-section" id="taskList"></div>
+        <div class="log-inputs" id="logInputs">
+            <div class="rating-box">
+                <button class="rating-btn" onclick="app.setRating(1)">普通</button>
+                <button class="rating-btn active" id="rat2" onclick="app.setRating(2)">良い</button>
+                <button class="rating-btn" onclick="app.setRating(3)">最高！</button>
+            </div>
+            <input type="text" id="memoInput" class="memo-input" placeholder="一言メモ（任意）">
+        </div>
+        <div class="actions">
+            <button class="complete-btn" id="completeBtn" onclick="app.stampToday()" disabled>本日の修行を完了</button>
+        </div>
+    </div>
+
+    <button class="fab" onclick="app.toggleModal('settingsModal', true)">⚙️</button>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-header"><h3>メニュー編集</h3><button onclick="app.toggleModal('settingsModal', false)">✕</button></div>
+        <div id="taskEditorList"></div>
+        <button style="width:100%; padding:15px; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;" onclick="app.addNewTask()">＋ 新しい修行を追加</button>
+    </div>
+
+    <div id="logDetailModal" class="modal">
+        <div class="modal-header"><h3>修行の記録</h3><button onclick="app.toggleModal('logDetailModal', false)">✕</button></div>
+        <div id="logDetailContent" style="text-align:center; padding-top:20px;">
+            <div id="detailDate" style="font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></div>
+            <div id="detailStamp" style="font-size:5rem; margin:20px 0;"></div>
+            <div id="detailRating" style="color:var(--accent-color); font-weight:bold; font-size:1.1rem; margin-bottom:15px;"></div>
+            <div id="detailMemo" style="background:#f8f9fa; padding:20px; border-radius:15px; font-style:italic; line-height:1.5;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 全ての関数をappオブジェクトにまとめて衝突を防ぐ
+    const app = {
+        state: {
+            viewDate: new Date(),
+            history: JSON.parse(localStorage.getItem('trainingHistoryV4')) || {},
+            tasks: JSON.parse(localStorage.getItem('trainingTasksV4')) || ["宿題", "音読", "音声計算", "素振り", "全力2分切り返し", "洗濯物"],
+            selectedRating: 2
+        },
+
+        init: function() {
+            this.render();
+        },
+
+        save: function() {
+            localStorage.setItem('trainingTasksV4', JSON.stringify(this.state.tasks));
+            localStorage.setItem('trainingHistoryV4', JSON.stringify(this.state.history));
+            this.render();
+        },
+
+        getTodayStr: function(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        },
+
+        render: function() {
+            this.renderCalendar();
+            this.renderTasks();
+            this.renderSettings();
+            this.updateStreak();
+        },
+
+        renderCalendar: function() {
+            const year = this.state.viewDate.getFullYear();
+            const month = this.state.viewDate.getMonth();
+            document.getElementById('monthDisplay').innerText = `${year}年 ${month + 1}月`;
+            
+            const grid = document.getElementById('calendarGrid');
+            const labels = Array.from(grid.querySelectorAll('.day-label'));
+            grid.innerHTML = '';
+            labels.forEach(l => grid.appendChild(l));
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const todayStr = this.getTodayStr(new Date());
+
+            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+            for (let d = 1; d <= lastDate; d++) {
+                const dateObj = new Date(year, month, d);
+                const dateStr = this.getTodayStr(dateObj);
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day';
+                if (dateStr === todayStr) dayEl.classList.add('today');
+                if (dateObj.getDay() === 0) dayEl.classList.add('sun');
+                if (dateObj.getDay() === 6) dayEl.classList.add('sat');
+                dayEl.innerHTML = `<span>${d}</span>`;
+                
+                if (this.state.history[dateStr]) {
+                    const s = document.createElement('span');
+                    s.className = 'stamp-mark';
+                    s.innerText = this.state.history[dateStr].icon || "💮";
+                    dayEl.appendChild(s);
+                    dayEl.onclick = () => this.showLogDetail(dateStr);
+                }
+                grid.appendChild(dayEl);
+            }
+        },
+
+        renderTasks: function() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = "";
+            this.state.tasks.forEach((task, i) => {
+                const div = document.createElement('div');
+                div.className = 'task-item';
+                div.innerHTML = `<input type="checkbox" onchange="this.parentElement.classList.toggle('checked', this.checked); app.checkBtn()"><span style="flex-grow:1">${task}</span>`;
+                div.onclick = (e) => {
+                    if(e.target.tagName !== 'INPUT') {
+                        const ck = div.querySelector('input');
+                        ck.checked = !ck.checked;
+                        div.classList.toggle('checked', ck.checked);
+                        this.checkBtn();
+                    }
+                };
+                list.appendChild(div);
+            });
+            this.checkBtn();
+        },
+
+        checkBtn: function() {
+            const checks = document.querySelectorAll('.task-item input');
+            const allDone = checks.length > 0 && Array.from(checks).every(c => c.checked);
+            const todayStr = this.getTodayStr(new Date());
+            const isCurrentMonth = this.state.viewDate.getMonth() === new Date().getMonth();
+            
+            const btn = document.getElementById('completeBtn');
+            btn.disabled = !allDone || !!this.state.history[todayStr] || !isCurrentMonth;
+            document.getElementById('logInputs').style.display = this.state.history[todayStr] ? 'none' : 'block';
+        },
+
+        updateStreak: function() {
+            let streak = 0, d = new Date();
+            while(this.state.history[this.getTodayStr(d)]) { streak++; d.setDate(d.getDate() - 1); }
+            document.getElementById('streakNum').innerText = streak;
+            return streak;
+        },
+
+        setRating: function(val) {
+            this.state.selectedRating = val;
+            document.querySelectorAll('.rating-btn').forEach((btn, i) => btn.classList.toggle('active', i + 1 === val));
+        },
+
+        stampToday: function() {
+            const streak = this.updateStreak() + 1;
+            let icon = streak >= 7 ? "💎" : (streak >= 3 ? "🔥" : "💮");
+            const ratingText = ["普通", "良い", "最高！"][this.state.selectedRating - 1];
+            this.state.history[this.getTodayStr(new Date())] = {
+                icon: icon, rating: ratingText, memo: document.getElementById('memoInput').value || "（メモなし）", streak: streak
+            };
+            document.getElementById('memoInput').value = "";
+            this.save();
+            alert("修行完了！ナイスです！");
+        },
+
+        showLogDetail: function(dateStr) {
+            const log = this.state.history[dateStr];
+            document.getElementById('detailDate').innerText = dateStr;
+            document.getElementById('detailStamp').innerText = log.icon;
+            document.getElementById('detailRating').innerText = `評価: ${log.rating}`;
+            document.getElementById('detailMemo').innerText = log.memo;
+            this.toggleModal('logDetailModal', true);
+        },
+
+        changeMonth: function(diff) { this.state.viewDate.setMonth(this.state.viewDate.getMonth() + diff); this.render(); },
+        toggleModal: function(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; },
+
+        renderSettings: function() {
+            const editor = document.getElementById('taskEditorList');
+            editor.innerHTML = "";
+            this.state.tasks.forEach((task, i) => {
+                const div = document.createElement('div');
+                div.style.display = "flex"; div.style.marginBottom = "10px";
+                div.innerHTML = `<input type="text" style="flex-grow:1; padding:10px; border:1px solid #ddd; border-radius:8px;" value="${task}" onchange="app.state.tasks[${i}]=this.value; app.save()"><button onclick="app.state.tasks.splice(${i}, 1); app.save()" style="margin-left:8px; background:#ff7675; color:white; border:none; border-radius:8px; padding:0 15px;">✕</button>`;
+                editor.appendChild(div);
+            });
+        },
+        addNewTask: function() { this.state.tasks.push("新しい修行"); this.save(); }
+    };
+
+    // ページ読み込み完了後に実行
+    window.onload = () => app.init();
+</script>
+</body>
+</html>
