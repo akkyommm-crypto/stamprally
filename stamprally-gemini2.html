@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修行ログ・プロ：記録編</title>
+    <style>
+        :root {
+            --main-color: #2c3e50;
+            --accent-color: #3498db;
+            --stamp-color: #e74c3c;
+            --bg-color: #f2f4f7;
+            --sun-color: #e74c3c;
+            --sat-color: #3498db;
+        }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 450px; background: white; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); overflow: hidden; position: relative; min-height: 90vh; }
+        
+        /* ヘッダー */
+        .header { background: var(--main-color); color: white; padding: 20px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .month-title { text-align: center; flex-grow: 1; }
+        .month-title h2 { margin: 0; font-size: 1.2rem; }
+        .streak-count { font-size: 0.8rem; background: #f39c12; padding: 2px 8px; border-radius: 10px; margin-top: 4px; display: inline-block; font-weight: bold; }
+
+        /* カレンダー */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #fff; padding: 10px; border-bottom: 1px solid #eee; }
+        .day-label { text-align: center; font-size: 0.7rem; color: #aaa; padding: 5px 0; font-weight: bold; }
+        .day { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 0.85rem; border-radius: 8px; cursor: pointer; }
+        .day.today { background: #e8f4fd; color: var(--accent-color); font-weight: bold; }
+        .day.sun { color: var(--sun-color); }
+        .day.sat { color: var(--sat-color); }
+        .stamp-mark { font-size: 1.5rem; position: absolute; display: flex; align-items: center; justify-content: center; opacity: 0.9; }
+
+        /* タスクセクション */
+        .task-section { padding: 15px; }
+        .task-item { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 10px; border-radius: 12px; border-left: 5px solid #ddd; }
+        .task-item.checked { border-left-color: var(--accent-color); background: #eef7ff; }
+        .task-item input { width: 18px; height: 18px; margin-right: 12px; }
+
+        /* 入力セクション（評価とメモ） */
+        .log-inputs { padding: 0 15px 15px; background: #fff; }
+        .rating-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .rating-btn { border: 2px solid #ddd; background: white; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+        .rating-btn.active { border-color: var(--accent-color); background: var(--accent-color); color: white; }
+        .memo-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 0.9rem; }
+
+        .actions { padding: 0 15px 80px; }
+        .complete-btn { width: 100%; padding: 15px; border: none; background: var(--stamp-color); color: white; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); }
+        .complete-btn:disabled { background: #ccc; box-shadow: none; opacity: 0.7; }
+
+        /* フローティングボタン */
+        .fab { position: absolute; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--main-color); color: white; border: none; border-radius: 50%; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; }
+
+        /* モーダル共通 */
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <button class="nav-btn" onclick="changeMonth(-1)">❮</button>
+        <div class="month-title">
+            <h2 id="monthDisplay">202X年 X月</h2>
+            <div class="streak-count">🔥 継続: <span id="streakNum">0</span>日</div>
+        </div>
+        <button class="nav-btn" onclick="changeMonth(1)">❯</button>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid">
+        <div class="day-label">日</div><div class="day-label">月</div><div class="day-label">火</div>
+        <div class="day-label">水</div><div class="day-label">木</div><div class="day-label">金</div><div class="day-label">土</div>
+    </div>
+
+    <div class="task-section" id="taskList"></div>
+
+    <div class="log-inputs" id="logInputs">
+        <div class="rating-box">
+            <button class="rating-btn" onclick="setRating(1)">普通</button>
+            <button class="rating-btn active" id="defaultRating" onclick="setRating(2)">良い</button>
+            <button class="rating-btn" onclick="setRating(3)">最高！</button>
+        </div>
+        <input type="text" id="memoInput" class="memo-input" placeholder="一言メモ（例：素振りの形を意識した）">
+    </div>
+    
+    <div class="actions">
+        <button class="complete-btn" id="completeBtn" onclick="stampToday()" disabled>本日の修行を完了</button>
+    </div>
+
+    <button class="fab" onclick="toggleModal('settingsModal', true)">⚙️</button>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-header"><h3>メニュー編集</h3><button onclick="toggleModal('settingsModal', false)">✕</button></div>
+        <div id="taskEditorList"></div>
+        <button style="width:100%; padding:12px; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:bold;" onclick="addNewTask()">＋ 追加</button>
+    </div>
+
+    <div id="logDetailModal" class="modal">
+        <div class="modal-header"><h3>修行の記録</h3><button onclick="toggleModal('logDetailModal', false)">✕</button></div>
+        <div id="logDetailContent" style="text-align:center;">
+            <div id="detailDate" style="font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></div>
+            <div id="detailStamp" style="font-size:4rem; margin:20px 0;"></div>
+            <div id="detailRating" style="color:var(--accent-color); font-weight:bold; margin-bottom:10px;"></div>
+            <div id="detailMemo" style="background:#f8f9fa; padding:15px; border-radius:10px; font-style:italic;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let state = {
+        viewDate: new Date(),
+        history: JSON.parse(localStorage.getItem('trainingHistoryV2')) || {},
+        tasks: JSON.parse(localStorage.getItem('trainingTasksV2')) || ["宿題", "音読", "音声計算", "素振り", "全力2分切り返し", "洗濯物"],
+        selectedRating: 2
+    };
+
+    function save() {
+        localStorage.setItem('trainingTasksV2', JSON.stringify(state.tasks));
+        localStorage.setItem('trainingHistoryV2', JSON.stringify(state.history));
+        render();
+    }
+
+    function render() {
+        renderCalendar();
+        renderTasks();
+        renderSettings();
+        updateStreak();
+    }
+
+    function renderCalendar() {
+        const year = state.viewDate.getFullYear();
+        const month = state.viewDate.getMonth();
+        document.getElementById('monthDisplay').innerText = `${year}年 ${month + 1}月`;
+        const grid = document.getElementById('calendarGrid');
+        Array.from(grid.children).forEach((child, i) => { if(i > 6) child.remove(); });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+        const todayStr = getTodayStr(new Date());
+        for (let d = 1; d <= lastDate; d++) {
+            const dateObj = new Date(year, month, d);
+            const dateStr = getTodayStr(dateObj);
+            const dayEl = document.createElement('div');
+            dayEl.className = 'day';
+            if (dateStr === todayStr) dayEl.classList.add('today');
+            if (dateObj.getDay() === 0) dayEl.classList.add('sun');
+            if (dateObj.getDay() === 6) dayEl.classList.add('sat');
+            dayEl.innerHTML = `<span>${d}</span>`;
+            
+            if (state.history[dateStr]) {
+                const s = document.createElement('span');
+                s.className = 'stamp-mark';
+                s.innerText = state.history[dateStr].icon || "💮";
+                dayEl.appendChild(s);
+                dayEl.onclick = () => showLogDetail(dateStr);
+            }
+            grid.appendChild(dayEl);
+        }
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('taskList');
+        list.innerHTML = "";
+        state.tasks.forEach((task, i) => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.innerHTML = `<input type="checkbox" onchange="this.parentElement.classList.toggle('checked'); checkBtn()"><span>${task}</span>`;
+            list.appendChild(div);
+        });
+        checkBtn();
+    }
+
+    function setRating(val) {
+        state.selectedRating = val;
+        document.querySelectorAll('.rating-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i + 1 === val);
+        });
+    }
+
+    function checkBtn() {
+        const allDone = Array.from(document.querySelectorAll('.task-item input')).every(c => c.checked);
+        const todayStr = getTodayStr(new Date());
+        const isCurrent = state.viewDate.getMonth() === new Date().getMonth();
+        document.getElementById('completeBtn').disabled = !allDone || state.history[todayStr] || !isCurrent;
+        document.getElementById('logInputs').style.display = state.history[todayStr] ? 'none' : 'block';
+    }
+
+    function updateStreak() {
+        let streak = 0, d = new Date();
+        while(state.history[getTodayStr(d)]) { streak++; d.setDate(d.getDate() - 1); }
+        document.getElementById('streakNum').innerText = streak;
+        return streak;
+    }
+
+    function stampToday() {
+        const streak = updateStreak() + 1;
+        let icon = "💮";
+        if(streak >= 7) icon = "💎";
+        else if(streak >= 3) icon = "🔥";
+
+        const ratingText = ["普通", "良い", "最高！"][state.selectedRating - 1];
+        state.history[getTodayStr(new Date())] = {
+            icon: icon,
+            rating: ratingText,
+            memo: document.getElementById('memoInput').value || "（メモなし）",
+            streak: streak
+        };
+        document.getElementById('memoInput').value = "";
+        save();
+        alert("修行記録を保存しました！");
+    }
+
+    function showLogDetail(dateStr) {
+        const log = state.history[dateStr];
+        document.getElementById('detailDate').innerText = dateStr;
+        document.getElementById('detailStamp').innerText = log.icon;
+        document.getElementById('detailRating').innerText = `評価: ${log.rating}`;
+        document.getElementById('detailMemo').innerText = log.memo;
+        toggleModal('logDetailModal', true);
+    }
+
+    function getTodayStr(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+    function changeMonth(diff) { state.viewDate.setMonth(state.viewDate.getMonth() + diff); render(); }
+    function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
+    function renderSettings() {
+        const editor = document.getElementById('taskEditorList');
+        editor.innerHTML = "";
+        state.tasks.forEach((task, i) => {
+            const div = document.createElement('div');
+            div.className = 'task-edit-item';
+            div.style.display = "flex"; div.style.marginBottom = "10px";
+            div.innerHTML = `<input type="text" style="flex-grow:1; padding:8px;" value="${task}" onchange="state.tasks[${i}]=this.value; save()"><button onclick="state.tasks.splice(${i},1); save()" style="margin-left:5px; background:#ff7675; color:white; border:none; border-radius:5px;">✕</button>`;
+            editor.appendChild(div);
+        });
+    }
+    function addNewTask() { state.tasks.push("新しい修行"); save(); }
+
+    render();
+</script>
+</body>
+</html>
