@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>修行ログ・プロ</title>
+    <title>修行ログ・プロ Sync</title>
     <style>
         :root {
             --main-color: #2c3e50;
@@ -12,53 +12,58 @@
             --bg-color: #f2f4f7;
             --sun-color: #e74c3c;
             --sat-color: #3498db;
+            --success: #27ae60;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 450px; background: white; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); overflow: hidden; position: relative; min-height: 90vh; display: flex; flex-direction: column; }
+        body { font-family: "Hiragino Sans", "Meiryo", sans-serif; background: var(--bg-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 450px; background: white; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); overflow: hidden; position: relative; min-height: 95vh; display: flex; flex-direction: column; }
         
         /* ヘッダー */
         .header { background: var(--main-color); color: white; padding: 20px 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .nav-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .month-title { text-align: center; flex-grow: 1; }
         .month-title h2 { margin: 0; font-size: 1.1rem; }
-        .streak-count { font-size: 0.75rem; background: #f39c12; padding: 2px 8px; border-radius: 10px; margin-top: 4px; display: inline-block; font-weight: bold; }
+        .streak-count { font-size: 0.8rem; background: #f39c12; padding: 4px 12px; border-radius: 20px; margin-top: 6px; display: inline-block; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
         /* カレンダー */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #fff; padding: 10px; border-bottom: 1px solid #eee; }
         .day-label { text-align: center; font-size: 0.7rem; color: #aaa; padding: 5px 0; font-weight: bold; }
-        .day { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 0.85rem; border-radius: 8px; cursor: pointer; }
-        .day.today { background: #e8f4fd; color: var(--accent-color); font-weight: bold; }
+        .day { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 0.85rem; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
+        .day.today { background: #fff9e6; border: 1px solid #f39c12; color: #f39c12; font-weight: bold; }
         .day.sun { color: var(--sun-color); }
         .day.sat { color: var(--sat-color); }
-        .stamp-mark { font-size: 1.5rem; position: absolute; display: flex; align-items: center; justify-content: center; z-index: 1; }
+        .stamp-mark { font-size: 1.6rem; position: absolute; display: flex; align-items: center; justify-content: center; z-index: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
 
-        /* タスク・入力エリア */
+        /* コンテンツ */
         .content-area { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; }
         .task-section { padding: 15px; }
-        .task-item { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 12px; border-radius: 12px; border-left: 5px solid #ddd; }
-        .task-item.checked { border-left-color: var(--accent-color); background: #eef7ff; }
-        .task-item input { width: 20px; height: 20px; margin-right: 12px; }
+        .task-item { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 14px; border-radius: 15px; border-left: 6px solid #ddd; transition: 0.2s; }
+        .task-item.checked { border-left-color: var(--accent-color); background: #eef7ff; transform: translateX(5px); }
+        .task-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; }
 
-        .log-inputs { padding: 0 15px 15px; background: #fff; }
-        .rating-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
-        .rating-btn { border: 2px solid #ddd; background: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; }
+        .log-inputs { padding: 15px; background: #fff; border-top: 1px solid #eee; }
+        .rating-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .rating-btn { border: 2px solid #ddd; background: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: bold; color: #666; }
         .rating-btn.active { border-color: var(--accent-color); background: var(--accent-color); color: white; }
-        .memo-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+        .memo-input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 0.95rem; outline: none; transition: 0.3s; }
+        .memo-input:focus { border-color: var(--accent-color); }
 
         .actions { padding: 15px; }
-        .complete-btn { width: 100%; padding: 16px; border: none; background: var(--stamp-color); color: white; border-radius: 16px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); }
-        .complete-btn:disabled { background: #ccc; box-shadow: none; opacity: 0.6; }
+        .complete-btn { width: 100%; padding: 18px; border: none; background: var(--stamp-color); color: white; border-radius: 18px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3); transition: 0.3s; }
+        .complete-btn:active { transform: scale(0.98); box-shadow: none; }
+        .complete-btn:disabled { background: #ccc; box-shadow: none; opacity: 0.6; cursor: not-allowed; }
 
-        /* 設定ボタン（右下） */
-        .fab { position: absolute; bottom: 20px; right: 20px; width: 54px; height: 54px; background: var(--main-color); color: white; border: none; border-radius: 50%; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .fab { position: absolute; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--main-color); color: white; border: none; border-radius: 50%; font-size: 1.6rem; box-shadow: 0 6px 15px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000; justify-content:center; align-items:center; font-weight:bold; color:var(--main-color); }
 
-        /* モーダル */
-        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 25px; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f2f2f2; margin-bottom: 25px; padding-bottom: 10px; }
     </style>
 </head>
 <body>
+
+<div id="loading">通信中...</div>
 
 <div class="app-container">
     <div class="header">
@@ -93,29 +98,36 @@
     <button class="fab" onclick="app.toggleModal('settingsModal', true)">⚙️</button>
 
     <div id="settingsModal" class="modal">
-        <div class="modal-header"><h3>メニュー編集</h3><button onclick="app.toggleModal('settingsModal', false)">✕</button></div>
+        <div class="modal-header"><h3>設定メニュー</h3><button onclick="app.toggleModal('settingsModal', false)" style="border:none; background:none; font-size:1.5rem;">✕</button></div>
+        <h4>修行項目の編集</h4>
         <div id="taskEditorList"></div>
-        <button style="width:100%; padding:15px; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;" onclick="app.addNewTask()">＋ 新しい修行を追加</button>
+        <button style="width:100%; padding:15px; background:var(--accent-color); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:10px;" onclick="app.addNewTask()">＋ 新しい修行を追加</button>
+        
+        <h4 style="margin-top:30px; color:var(--success);">クラウド同期</h4>
+        <p style="font-size:0.75rem; color:#888;">スプレッドシートから履歴を復元します。</p>
+        <button onclick="app.importFromGAS()" style="width:100%; padding:15px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold;">シートからデータを同期</button>
     </div>
 
     <div id="logDetailModal" class="modal">
-        <div class="modal-header"><h3>修行の記録</h3><button onclick="app.toggleModal('logDetailModal', false)">✕</button></div>
-        <div id="logDetailContent" style="text-align:center; padding-top:20px;">
-            <div id="detailDate" style="font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></div>
-            <div id="detailStamp" style="font-size:5rem; margin:20px 0;"></div>
-            <div id="detailRating" style="color:var(--accent-color); font-weight:bold; font-size:1.1rem; margin-bottom:15px;"></div>
-            <div id="detailMemo" style="background:#f8f9fa; padding:20px; border-radius:15px; font-style:italic; line-height:1.5;"></div>
+        <div class="modal-header"><h3>修行の記録</h3><button onclick="app.toggleModal('logDetailModal', false)" style="border:none; background:none; font-size:1.5rem;">✕</button></div>
+        <div id="logDetailContent" style="text-align:center; padding-top:10px;">
+            <div id="detailDate" style="font-weight:bold; font-size:1.2rem; color:#888;"></div>
+            <div id="detailStamp" style="font-size:6rem; margin:20px 0;"></div>
+            <div id="detailRating" style="background:var(--accent-color); color:white; display:inline-block; padding:5px 15px; border-radius:20px; font-weight:bold; margin-bottom:15px;"></div>
+            <div id="detailMemo" style="background:#f8f9fa; padding:25px; border-radius:20px; font-style:italic; line-height:1.6; margin-top:10px; color:#444; border:1px solid #eee;"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // 全ての関数をappオブジェクトにまとめて衝突を防ぐ
+    // ★新しいGASのURLに貼り換えてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzESKndUebDMt8zJT1jO-uWJW4wYNCQkyL9R2WbmYEWWYlqRTeyuGvYS9vopRBxXVQ1fQ/exec";
+
     const app = {
         state: {
             viewDate: new Date(),
-            history: JSON.parse(localStorage.getItem('trainingHistoryV4')) || {},
-            tasks: JSON.parse(localStorage.getItem('trainingTasksV4')) || ["宿題", "音読", "音声計算", "素振り", "全力2分切り返し", "洗濯物"],
+            history: JSON.parse(localStorage.getItem('trainingHistoryV5')) || {},
+            tasks: JSON.parse(localStorage.getItem('trainingTasksV5')) || ["宿題", "音読", "音声計算", "素振り", "全力2分切り返し", "洗濯物"],
             selectedRating: 2
         },
 
@@ -124,8 +136,8 @@
         },
 
         save: function() {
-            localStorage.setItem('trainingTasksV4', JSON.stringify(this.state.tasks));
-            localStorage.setItem('trainingHistoryV4', JSON.stringify(this.state.history));
+            localStorage.setItem('trainingTasksV5', JSON.stringify(this.state.tasks));
+            localStorage.setItem('trainingHistoryV5', JSON.stringify(this.state.history));
             this.render();
         },
 
@@ -186,7 +198,7 @@
             this.state.tasks.forEach((task, i) => {
                 const div = document.createElement('div');
                 div.className = 'task-item';
-                div.innerHTML = `<input type="checkbox" onchange="this.parentElement.classList.toggle('checked', this.checked); app.checkBtn()"><span style="flex-grow:1">${task}</span>`;
+                div.innerHTML = `<input type="checkbox" onchange="this.parentElement.classList.toggle('checked', this.checked); app.checkBtn()"><span style="flex-grow:1; font-weight:bold;">${task}</span>`;
                 div.onclick = (e) => {
                     if(e.target.tagName !== 'INPUT') {
                         const ck = div.querySelector('input');
@@ -223,16 +235,63 @@
             document.querySelectorAll('.rating-btn').forEach((btn, i) => btn.classList.toggle('active', i + 1 === val));
         },
 
-        stampToday: function() {
+        stampToday: async function() {
             const streak = this.updateStreak() + 1;
-            let icon = streak >= 7 ? "💎" : (streak >= 3 ? "🔥" : "💮");
+            // 継続日数でスタンプが進化！
+            let icon = "💮";
+            if (streak >= 30) icon = "👑";
+            else if (streak >= 14) icon = "💎";
+            else if (streak >= 7) icon = "🔥";
+            else if (streak >= 3) icon = "✨";
+
             const ratingText = ["普通", "良い", "最高！"][this.state.selectedRating - 1];
-            this.state.history[this.getTodayStr(new Date())] = {
-                icon: icon, rating: ratingText, memo: document.getElementById('memoInput').value || "（メモなし）", streak: streak
+            const todayStr = this.getTodayStr(new Date());
+            
+            const logData = {
+                date: todayStr,
+                icon: icon,
+                rating: ratingText,
+                memo: document.getElementById('memoInput').value || "（メモなし）",
+                streak: streak
             };
+
+            // ローカル保存
+            this.state.history[todayStr] = logData;
             document.getElementById('memoInput').value = "";
             this.save();
-            alert("修行完了！ナイスです！");
+
+            // スプレッドシートへ送信
+            document.getElementById('loading').style.display = 'flex';
+            try {
+                await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(logData) });
+                alert(`修行完了！現在 ${streak}日連続です！`);
+            } catch (e) {
+                alert("送信エラー。ネット環境を確認してください。");
+            }
+            document.getElementById('loading').style.display = 'none';
+        },
+
+        importFromGAS: async function() {
+            if(!confirm("シートから全データを同期しますか？\n現在のスマホ内の履歴は上書きされます。")) return;
+            document.getElementById('loading').style.display = 'flex';
+            try {
+                const res = await fetch(GAS_URL);
+                const rawData = await res.json();
+                
+                // 履歴オブジェクトを再構築
+                const newHistory = {};
+                rawData.forEach(d => {
+                    newHistory[d.date] = d;
+                });
+                this.state.history = newHistory;
+                
+                this.render();
+                alert("同期が完了しました！");
+                this.toggleModal('settingsModal', false);
+            } catch (e) {
+                alert("読み込みエラー。URLを確認してください。");
+            }
+            document.getElementById('loading').style.display = 'none';
         },
 
         showLogDetail: function(dateStr) {
@@ -253,14 +312,13 @@
             this.state.tasks.forEach((task, i) => {
                 const div = document.createElement('div');
                 div.style.display = "flex"; div.style.marginBottom = "10px";
-                div.innerHTML = `<input type="text" style="flex-grow:1; padding:10px; border:1px solid #ddd; border-radius:8px;" value="${task}" onchange="app.state.tasks[${i}]=this.value; app.save()"><button onclick="app.state.tasks.splice(${i}, 1); app.save()" style="margin-left:8px; background:#ff7675; color:white; border:none; border-radius:8px; padding:0 15px;">✕</button>`;
+                div.innerHTML = `<input type="text" style="flex-grow:1; padding:12px; border:2px solid #eee; border-radius:12px; outline:none;" value="${task}" onchange="app.state.tasks[${i}]=this.value; app.save()"><button onclick="app.state.tasks.splice(${i}, 1); app.save()" style="margin-left:8px; background:#ff7675; color:white; border:none; border-radius:12px; padding:0 18px; font-weight:bold;">✕</button>`;
                 editor.appendChild(div);
             });
         },
         addNewTask: function() { this.state.tasks.push("新しい修行"); this.save(); }
     };
 
-    // ページ読み込み完了後に実行
     window.onload = () => app.init();
 </script>
 </body>
