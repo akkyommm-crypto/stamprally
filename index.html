@@ -826,28 +826,30 @@ var App = {
   /* ---------- GAS同期 ---------- */
   syncFromGAS: function() {
     var self = this;
-    if (!confirm("シートのデータをこのアプリに合体させますか？")) return;
+    if (!confirm("スプレッドシートの内容でアプリを上書きします。\nスプシで消したデータはアプリからも消えます。よいですか？")) return;
     document.getElementById("loading").classList.add("on");
     fetch(GAS_URL)
       .then(function(res) { return res.json(); })
       .then(function(arr) {
-        if (Array.isArray(arr)) {
-          arr.forEach(function(d) {
-            var k = normalizeKey(String(d.date || ""));
-            if (k) {
-              self.data.history[k] = {
-                icon:   STAMP,
-                rating: d.rating || "普通",
-                memo:   d.memo   || "（メモなし）",
-                streak: d.streak || 1,
-                cheer:  d.cheer  || ""
-              };
-            }
-          });
-          self.save();
-          self.renderAll();
-          alert("同期完了！");
-        }
+        if (!Array.isArray(arr)) return;
+        // スプシの内容で丸ごと上書き
+        var newHistory = {};
+        arr.forEach(function(d) {
+          var k = normalizeKey(String(d.date || ""));
+          if (k) {
+            newHistory[k] = {
+              icon:   STAMP,
+              rating: d.rating || "普通",
+              memo:   d.memo   || "（メモなし）",
+              streak: d.streak || 1,
+              cheer:  d.cheer  || ""
+            };
+          }
+        });
+        self.data.history = newHistory;
+        self.save();
+        self.renderAll();
+        alert("同期完了！スプシの内容に合わせました。");
       })
       .catch(function() { alert("読み込みエラー。GASのdoGet関数とURLを確認してください。"); })
       .finally(function() { document.getElementById("loading").classList.remove("on"); });
@@ -910,26 +912,27 @@ var App = {
 
 window.onload = function() {
   App.init();
-  // ページを開いたとき自動でGASから同期（すでにある日付は上書きしない）
+  // ページを開いたとき自動でGASから丸ごと上書き同期
   fetch(GAS_URL)
     .then(function(res) { return res.json(); })
     .then(function(arr) {
-      if (!Array.isArray(arr)) return;
-      var updated = false;
+      if (!Array.isArray(arr) || arr.length === 0) return;
+      var newHistory = {};
       arr.forEach(function(d) {
         var k = normalizeKey(String(d.date || ""));
-        if (k && !App.data.history[k]) {
-          App.data.history[k] = {
+        if (k) {
+          newHistory[k] = {
             icon:   "💮",
             rating: d.rating || "普通",
             memo:   d.memo   || "（メモなし）",
             streak: d.streak || 1,
             cheer:  d.cheer  || ""
           };
-          updated = true;
         }
       });
-      if (updated) { App.save(); App.renderAll(); }
+      App.data.history = newHistory;
+      App.save();
+      App.renderAll();
     })
     .catch(function() {}); // 失敗しても何もしない
 };
