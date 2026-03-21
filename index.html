@@ -1,325 +1,938 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>修行ログ・プロ Sync</title>
-    <style>
-        :root {
-            --main-color: #2c3e50;
-            --accent-color: #3498db;
-            --stamp-color: #e74c3c;
-            --bg-color: #f2f4f7;
-            --sun-color: #e74c3c;
-            --sat-color: #3498db;
-            --success: #27ae60;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: "Hiragino Sans", "Meiryo", sans-serif; background: var(--bg-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 450px; background: white; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); overflow: hidden; position: relative; min-height: 95vh; display: flex; flex-direction: column; }
-        
-        /* ヘッダー */
-        .header { background: var(--main-color); color: white; padding: 20px 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .nav-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .month-title { text-align: center; flex-grow: 1; }
-        .month-title h2 { margin: 0; font-size: 1.1rem; }
-        .streak-count { font-size: 0.8rem; background: #f39c12; padding: 4px 12px; border-radius: 20px; margin-top: 6px; display: inline-block; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>修行ログ</title>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fff8f0;
+  --surface: #ffffff;
+  --surface2: #fff3e8;
+  --border: #ffd8b0;
+  --accent: #ff6b35;
+  --accent2: #ffcc02;
+  --text: #2d1b00;
+  --text2: #9b6e4a;
+  --sun: #e53935;
+  --sat: #1565c0;
+  --success: #2e7d32;
+  --success-bg: #e8f5e9;
+  --purple: #7c5cfc;
+  --danger: #c62828;
+  --danger-bg: #ffebee;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+body { font-family: "Noto Sans JP", sans-serif; background: var(--bg); min-height: 100vh; display: flex; justify-content: center; }
+.app { width: 100%; max-width: 460px; min-height: 100vh; background: var(--surface); display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(255,107,53,0.08); }
 
-        /* カレンダー */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #fff; padding: 10px; border-bottom: 1px solid #eee; }
-        .day-label { text-align: center; font-size: 0.7rem; color: #aaa; padding: 5px 0; font-weight: bold; }
-        .day { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 0.85rem; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
-        .day.today { background: #fff9e6; border: 1px solid #f39c12; color: #f39c12; font-weight: bold; }
-        .day.sun { color: var(--sun-color); }
-        .day.sat { color: var(--sat-color); }
-        .stamp-mark { font-size: 1.6rem; position: absolute; display: flex; align-items: center; justify-content: center; z-index: 1; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+/* ===== HEADER ===== */
+.header { background: var(--surface2); border-bottom: 2px solid var(--border); padding: 12px 16px; flex-shrink: 0; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
+.app-title { font-family: "Dela Gothic One", sans-serif; color: var(--accent); font-size: 1.1rem; letter-spacing: 0.05em; }
+.today-btn { background: var(--surface); border: 2px solid var(--border); border-radius: 10px; padding: 7px 13px; font-size: 0.78rem; font-weight: 700; color: var(--text2); cursor: pointer; font-family: "Noto Sans JP", sans-serif; }
 
-        /* コンテンツ */
-        .content-area { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; }
-        .task-section { padding: 15px; }
-        .task-item { display: flex; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 14px; border-radius: 15px; border-left: 6px solid #ddd; transition: 0.2s; }
-        .task-item.checked { border-left-color: var(--accent-color); background: #eef7ff; transform: translateX(5px); }
-        .task-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; }
+/* ===== TABS ===== */
+.tabs { display: flex; background: var(--surface2); border-bottom: 2px solid var(--border); flex-shrink: 0; }
+.tab { flex: 1; padding: 11px 0 9px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text2); font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: 0.2s; font-family: "Noto Sans JP", sans-serif; }
+.tab-icon { font-size: 1.15rem; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        .log-inputs { padding: 15px; background: #fff; border-top: 1px solid #eee; }
-        .rating-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        .rating-btn { border: 2px solid #ddd; background: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: bold; color: #666; }
-        .rating-btn.active { border-color: var(--accent-color); background: var(--accent-color); color: white; }
-        .memo-input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 0.95rem; outline: none; transition: 0.3s; }
-        .memo-input:focus { border-color: var(--accent-color); }
+/* ===== VIEWS ===== */
+.view { display: none; flex: 1; overflow-y: auto; padding-bottom: 30px; }
+.view.active { display: block; }
 
-        .actions { padding: 15px; }
-        .complete-btn { width: 100%; padding: 18px; border: none; background: var(--stamp-color); color: white; border-radius: 18px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3); transition: 0.3s; }
-        .complete-btn:active { transform: scale(0.98); box-shadow: none; }
-        .complete-btn:disabled { background: #ccc; box-shadow: none; opacity: 0.6; cursor: not-allowed; }
+/* ===== ALERTS ===== */
+.alert-crisis { background: var(--danger-bg); border: 2px solid #ef9a9a; border-radius: 14px; padding: 13px 16px; margin: 14px 14px 0; display: flex; align-items: center; gap: 12px; }
+.alert-crisis-icon { font-size: 1.6rem; flex-shrink: 0; }
+.alert-crisis-text { font-size: 0.82rem; font-weight: 700; color: var(--danger); line-height: 1.4; }
 
-        .fab { position: absolute; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--main-color); color: white; border: none; border-radius: 50%; font-size: 1.6rem; box-shadow: 0 6px 15px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
-        #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000; justify-content:center; align-items:center; font-weight:bold; color:var(--main-color); }
+.alert-weekly { background: #f3f0ff; border: 2px solid #d1c4e9; border-radius: 14px; padding: 13px 16px; margin: 14px 14px 0; display: flex; align-items: center; gap: 12px; }
+.alert-weekly-icon { font-size: 1.6rem; flex-shrink: 0; }
+.alert-weekly-text { font-size: 0.82rem; font-weight: 700; color: var(--purple); line-height: 1.4; }
 
-        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 25px; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f2f2f2; margin-bottom: 25px; padding-bottom: 10px; }
-    </style>
+/* ===== TODAY ===== */
+.today-wrap { padding: 14px; }
+.date-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.today-label { font-size: 0.82rem; font-weight: 700; color: var(--text2); }
+.week-dots { display: flex; gap: 5px; }
+.w-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+.w-dot.done { background: var(--accent); }
+.w-dot.cur { box-shadow: 0 0 0 2.5px var(--accent2); }
+
+.task-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+.task-card { background: var(--surface2); border: 2px solid var(--border); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 13px; cursor: pointer; transition: all 0.18s; user-select: none; -webkit-user-select: none; }
+.task-card:active { transform: scale(0.98); }
+.task-card.done { border-color: var(--accent); background: #fff3ee; }
+.task-check { width: 28px; height: 28px; flex-shrink: 0; border-radius: 9px; border: 2.5px solid var(--border); background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: 0.18s; color: transparent; }
+.task-card.done .task-check { background: var(--accent); border-color: var(--accent); color: white; }
+.task-name { flex: 1; font-weight: 700; color: var(--text); font-size: 0.95rem; }
+.task-card.done .task-name { color: var(--text2); text-decoration: line-through; }
+
+.section-label { font-size: 0.7rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+
+.rating-wrap { margin-bottom: 16px; }
+.rating-btns { display: flex; gap: 8px; }
+.r-btn { flex: 1; padding: 10px 4px; background: var(--surface2); border: 2px solid var(--border); border-radius: 13px; color: var(--text2); font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: 0.18s; display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: "Noto Sans JP", sans-serif; }
+.r-icon { font-size: 1.4rem; }
+.r-btn.active { border-color: var(--accent); background: #fff3ee; color: var(--accent); }
+
+.memo-wrap { margin-bottom: 16px; }
+.memo-input { width: 100%; background: var(--surface2); border: 2px solid var(--border); border-radius: 13px; padding: 13px 14px; font-size: 0.95rem; color: var(--text); font-family: "Noto Sans JP", sans-serif; outline: none; resize: none; transition: 0.2s; }
+.memo-input::placeholder { color: var(--text2); }
+.memo-input:focus { border-color: var(--accent); }
+
+.complete-btn { width: 100%; padding: 19px; background: var(--accent); color: white; border: none; border-radius: 18px; font-family: "Dela Gothic One", sans-serif; font-size: 1.2rem; cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,53,0.3); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.complete-btn:active { transform: scale(0.97); box-shadow: none; }
+.complete-btn:disabled { background: var(--border); color: var(--text2); box-shadow: none; cursor: not-allowed; }
+
+.done-card { background: var(--success-bg); border: 2px solid #a5d6a7; border-radius: 18px; padding: 24px 20px; text-align: center; }
+.done-stamp { font-size: 4.5rem; display: block; margin-bottom: 8px; }
+.done-title { font-family: "Dela Gothic One", sans-serif; color: var(--success); font-size: 1.1rem; margin-bottom: 4px; }
+.done-sub { font-size: 0.82rem; color: #555; margin-bottom: 6px; }
+.done-encourage { font-size: 0.88rem; color: var(--success); font-weight: 700; margin-bottom: 12px; }
+.done-memo { background: white; border-radius: 12px; padding: 12px 16px; color: var(--text); font-size: 0.85rem; line-height: 1.6; font-style: italic; border: 1px solid #c8e6c9; }
+
+/* ===== 月間目標 ===== */
+.goal-card { background: var(--surface2); border: 2px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; }
+.goal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.goal-title { font-size: 0.78rem; font-weight: 700; color: var(--text2); }
+.goal-edit-btn { font-size: 0.72rem; background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 3px 10px; color: var(--text2); cursor: pointer; font-family: "Noto Sans JP", sans-serif; }
+.goal-nums { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
+.goal-current { font-family: "Dela Gothic One", sans-serif; font-size: 1.8rem; color: var(--accent); line-height: 1; }
+.goal-sep { font-size: 1rem; color: var(--text2); }
+.goal-target { font-family: "Dela Gothic One", sans-serif; font-size: 1.2rem; color: var(--text2); }
+.goal-unit { font-size: 0.75rem; color: var(--text2); font-weight: 700; }
+.goal-bar-track { width: 100%; height: 12px; background: var(--border); border-radius: 6px; overflow: hidden; }
+.goal-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 6px; transition: width 0.6s ease; }
+.goal-msg { font-size: 0.75rem; color: var(--text2); margin-top: 6px; font-weight: 700; }
+
+/* ===== CALENDAR ===== */
+.cal-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 8px; }
+.cal-btn { width: 38px; height: 38px; background: var(--surface2); border: 2px solid var(--border); border-radius: 11px; color: var(--text); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cal-month-label { font-family: "Dela Gothic One", sans-serif; color: var(--text); font-size: 1.1rem; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 0 10px 14px; }
+.cal-dow { text-align: center; font-size: 0.65rem; font-weight: 700; color: var(--text2); padding: 5px 0; }
+.cal-dow.sun { color: var(--sun); }
+.cal-dow.sat { color: var(--sat); }
+.cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; position: relative; cursor: default; transition: 0.15s; }
+.cal-day.clickable { cursor: pointer; }
+.cal-day.clickable:active { transform: scale(0.9); }
+.cal-day.today { background: var(--surface2); border: 2px solid var(--accent2); }
+.day-n { font-size: 0.7rem; color: var(--text2); z-index: 1; line-height: 1; }
+.cal-day.today .day-n { color: var(--accent); font-weight: 900; }
+.cal-day.sun .day-n { color: var(--sun); }
+.cal-day.sat .day-n { color: var(--sat); }
+.cal-stamp { font-size: 1.55rem; position: absolute; animation: pop 0.32s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+@keyframes pop { from { transform: scale(0) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+
+/* ===== STATS ===== */
+.stats-wrap { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.stat-card { background: var(--surface2); border: 2px solid var(--border); border-radius: 18px; padding: 16px; }
+.stat-card-title { font-size: 0.7rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 13px; }
+
+/* 称号カード */
+.title-card { background: linear-gradient(135deg, #1a0a00, #3d1f00); border: 2px solid #8b4513; border-radius: 18px; padding: 20px; text-align: center; }
+.title-label { font-size: 0.68rem; font-weight: 700; color: #cd853f; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.title-icon { font-size: 3rem; display: block; margin-bottom: 6px; }
+.title-name { font-family: "Dela Gothic One", sans-serif; font-size: 1.3rem; color: #ffd700; margin-bottom: 6px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+.title-desc { font-size: 0.78rem; color: #cd853f; line-height: 1.5; }
+.title-next { font-size: 0.72rem; color: #8b6914; margin-top: 10px; border-top: 1px solid #3d2800; padding-top: 10px; }
+.title-progress-track { height: 6px; background: #3d2800; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.title-progress-fill { height: 100%; background: linear-gradient(90deg, #cd853f, #ffd700); border-radius: 3px; transition: width 0.6s ease; }
+
+.num-row { display: flex; gap: 10px; }
+.num-box { flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: 13px; padding: 12px 8px; text-align: center; }
+.num-big { font-family: "Dela Gothic One", sans-serif; font-size: 1.9rem; color: var(--accent); line-height: 1; }
+.num-label { font-size: 0.63rem; color: var(--text2); margin-top: 3px; font-weight: 700; }
+.bar-chart { display: flex; flex-direction: column; gap: 7px; }
+.bar-row { display: flex; align-items: center; gap: 9px; }
+.bar-lbl { width: 20px; font-size: 0.68rem; font-weight: 700; color: var(--text2); text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; height: 18px; background: var(--surface); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.bar-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.7s ease; display: flex; align-items: center; padding-left: 6px; }
+.bar-pct { font-size: 0.58rem; font-weight: 700; color: white; }
+.bar-count { width: 26px; font-size: 0.68rem; color: var(--text2); font-weight: 700; flex-shrink: 0; }
+.heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.heat-cell { aspect-ratio: 1; border-radius: 4px; background: var(--border); }
+.heat-cell.on { background: var(--accent); }
+.heat-legend { display: flex; align-items: center; gap: 5px; justify-content: flex-end; margin-top: 7px; font-size: 0.62rem; color: var(--text2); }
+.leg { width: 11px; height: 11px; border-radius: 3px; }
+
+/* ===== SETTINGS ===== */
+.settings-wrap { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.settings-card { background: var(--surface2); border: 2px solid var(--border); border-radius: 18px; overflow: hidden; }
+.settings-card-title { padding: 11px 16px; font-size: 0.7rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; background: var(--surface); border-bottom: 1.5px solid var(--border); }
+.settings-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 9px; }
+.task-edit-row { display: flex; gap: 8px; align-items: center; }
+.task-edit-input { flex: 1; background: var(--surface); border: 2px solid var(--border); border-radius: 11px; padding: 11px 13px; font-size: 0.9rem; color: var(--text); font-family: "Noto Sans JP", sans-serif; outline: none; }
+.task-edit-input:focus { border-color: var(--accent); }
+.del-btn { width: 38px; height: 38px; background: #ffebee; border: 1.5px solid #ffcdd2; border-radius: 10px; color: var(--sun); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.add-btn { width: 100%; padding: 12px; background: var(--surface); border: 2px dashed var(--purple); border-radius: 12px; color: var(--purple); font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: "Noto Sans JP", sans-serif; }
+.sync-btn { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 13px; font-weight: 700; font-size: 0.92rem; cursor: pointer; font-family: "Noto Sans JP", sans-serif; }
+.sync-btn:active { transform: scale(0.98); }
+
+/* 目標設定input */
+.goal-input-row { display: flex; align-items: center; gap: 10px; }
+.goal-num-input { width: 70px; background: var(--surface); border: 2px solid var(--border); border-radius: 11px; padding: 11px 13px; font-size: 1.1rem; font-weight: 700; color: var(--accent); font-family: "Dela Gothic One", sans-serif; outline: none; text-align: center; }
+.goal-num-input:focus { border-color: var(--accent); }
+.goal-save-btn { flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 11px; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: "Noto Sans JP", sans-serif; }
+
+/* ===== DETAIL SHEET ===== */
+.overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+.sheet { background: var(--surface); width: 100%; max-width: 460px; border-radius: 24px 24px 0 0; padding: 16px 20px 48px; max-height: 80vh; overflow-y: auto; animation: slideUp 0.28s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-handle { width: 38px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+.detail-date { text-align: center; color: var(--text2); font-size: 0.82rem; margin-bottom: 6px; }
+.detail-stamp { font-size: 5rem; display: block; text-align: center; margin-bottom: 10px; animation: pop 0.35s ease both; }
+.detail-streak-badge { display: block; text-align: center; margin: 0 auto 14px; width: fit-content; background: var(--accent); color: white; border-radius: 20px; padding: 5px 18px; font-weight: 700; font-size: 0.82rem; }
+.detail-rating { text-align: center; color: var(--text2); font-size: 0.8rem; font-weight: 700; margin-bottom: 12px; }
+.detail-memo { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 14px; padding: 18px; font-size: 0.88rem; line-height: 1.65; color: var(--text); font-style: italic; text-align: center; }
+
+/* ===== LOADING ===== */
+.loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,248,240,0.88); z-index: 999; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.loading.on { display: flex; }
+.spinner { width: 42px; height: 42px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-txt { font-weight: 700; color: var(--accent); font-size: 0.88rem; }
+#confetti { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+</style>
 </head>
 <body>
+<canvas id="confetti"></canvas>
+<div class="loading" id="loading"><div class="spinner"></div><div class="loading-txt">通信中...</div></div>
 
-<div id="loading">通信中...</div>
+<div class="app">
+  <div class="header">
+    <div class="app-title">🥋 修行ログ</div>
+    <button class="today-btn" onclick="App.goToday()">今日へ</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-today"    onclick="App.switchTab('today')"><span class="tab-icon">✏️</span>今日</button>
+    <button class="tab"        id="tab-calendar" onclick="App.switchTab('calendar')"><span class="tab-icon">📅</span>カレンダー</button>
+    <button class="tab"        id="tab-stats"    onclick="App.switchTab('stats')"><span class="tab-icon">📊</span>成績</button>
+    <button class="tab"        id="tab-settings" onclick="App.switchTab('settings')"><span class="tab-icon">⚙️</span>設定</button>
+  </div>
 
-<div class="app-container">
-    <div class="header">
-        <button class="nav-btn" onclick="app.changeMonth(-1)">❮</button>
-        <div class="month-title">
-            <h2 id="monthDisplay">Loading...</h2>
-            <div class="streak-count">🔥 継続: <span id="streakNum">0</span>日</div>
+  <!-- TODAY -->
+  <div class="view active" id="view-today">
+    <div id="alertArea"></div>
+    <div class="today-wrap">
+      <div class="date-row">
+        <div class="today-label" id="todayLabel"></div>
+        <div class="week-dots" id="weekDots"></div>
+      </div>
+      <div id="goalCardArea"></div>
+      <div class="task-list" id="taskList"></div>
+      <div id="inputArea">
+        <div class="rating-wrap">
+          <div class="section-label">今日はどうだった？</div>
+          <div class="rating-btns">
+            <button class="r-btn"        id="r1" onclick="App.setRating(1)"><span class="r-icon">😐</span>普通</button>
+            <button class="r-btn active" id="r2" onclick="App.setRating(2)"><span class="r-icon">😊</span>良い</button>
+            <button class="r-btn"        id="r3" onclick="App.setRating(3)"><span class="r-icon">🤩</span>最高！</button>
+          </div>
         </div>
-        <button class="nav-btn" onclick="app.changeMonth(1)">❯</button>
-    </div>
-
-    <div class="calendar-grid" id="calendarGrid">
-        <div class="day-label">日</div><div class="day-label">月</div><div class="day-label">火</div>
-        <div class="day-label">水</div><div class="day-label">木</div><div class="day-label">金</div><div class="day-label">土</div>
-    </div>
-
-    <div class="content-area">
-        <div class="task-section" id="taskList"></div>
-        <div class="log-inputs" id="logInputs">
-            <div class="rating-box">
-                <button class="rating-btn" onclick="app.setRating(1)">普通</button>
-                <button class="rating-btn active" id="rat2" onclick="app.setRating(2)">良い</button>
-                <button class="rating-btn" onclick="app.setRating(3)">最高！</button>
-            </div>
-            <input type="text" id="memoInput" class="memo-input" placeholder="一言メモ（任意）">
+        <div class="memo-wrap">
+          <div class="section-label">一言メモ（任意）</div>
+          <textarea class="memo-input" id="memoInput" rows="2" placeholder="今日頑張ったこと..."></textarea>
         </div>
-        <div class="actions">
-            <button class="complete-btn" id="completeBtn" onclick="app.stampToday()" disabled>本日の修行を完了</button>
-        </div>
+        <button class="complete-btn" id="completeBtn" onclick="App.complete()" disabled>
+          💮 修行完了！
+        </button>
+      </div>
+      <div id="doneArea" style="display:none"></div>
     </div>
+  </div>
 
-    <button class="fab" onclick="app.toggleModal('settingsModal', true)">⚙️</button>
-
-    <div id="settingsModal" class="modal">
-        <div class="modal-header"><h3>設定メニュー</h3><button onclick="app.toggleModal('settingsModal', false)" style="border:none; background:none; font-size:1.5rem;">✕</button></div>
-        <h4>修行項目の編集</h4>
-        <div id="taskEditorList"></div>
-        <button style="width:100%; padding:15px; background:var(--accent-color); color:white; border:none; border-radius:12px; font-weight:bold; margin-top:10px;" onclick="app.addNewTask()">＋ 新しい修行を追加</button>
-        
-        <h4 style="margin-top:30px; color:var(--success);">クラウド同期</h4>
-        <p style="font-size:0.75rem; color:#888;">スプレッドシートから履歴を復元します。</p>
-        <button onclick="app.importFromGAS()" style="width:100%; padding:15px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold;">シートからデータを同期</button>
+  <!-- CALENDAR -->
+  <div class="view" id="view-calendar">
+    <div class="cal-nav">
+      <button class="cal-btn" onclick="App.changeMonth(-1)">❮</button>
+      <div class="cal-month-label" id="calLabel"></div>
+      <button class="cal-btn" onclick="App.changeMonth(1)">❯</button>
     </div>
-
-    <div id="logDetailModal" class="modal">
-        <div class="modal-header"><h3>修行の記録</h3><button onclick="app.toggleModal('logDetailModal', false)" style="border:none; background:none; font-size:1.5rem;">✕</button></div>
-        <div id="logDetailContent" style="text-align:center; padding-top:10px;">
-            <div id="detailDate" style="font-weight:bold; font-size:1.2rem; color:#888;"></div>
-            <div id="detailStamp" style="font-size:6rem; margin:20px 0;"></div>
-            <div id="detailRating" style="background:var(--accent-color); color:white; display:inline-block; padding:5px 15px; border-radius:20px; font-weight:bold; margin-bottom:15px;"></div>
-            <div id="detailMemo" style="background:#f8f9fa; padding:25px; border-radius:20px; font-style:italic; line-height:1.6; margin-top:10px; color:#444; border:1px solid #eee;"></div>
-        </div>
+    <div class="cal-grid" id="calGrid">
+      <div class="cal-dow sun">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div>
+      <div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div>
+      <div class="cal-dow sat">土</div>
     </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="view" id="view-stats">
+    <div class="stats-wrap" id="statsWrap"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="view-settings">
+    <div class="settings-wrap" id="settingsWrap"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="App.closeDetail()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div id="detailContent"></div>
+  </div>
 </div>
 
 <script>
-    // ★新しいGASのURLに貼り換えてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzESKndUebDMt8zJT1jO-uWJW4wYNCQkyL9R2WbmYEWWYlqRTeyuGvYS9vopRBxXVQ1fQ/exec";
+/* ============================================================
+   定数
+============================================================ */
+var GAS_URL  = "https://script.google.com/macros/s/AKfycbx4M_eLmuz38-e8PNsQZLlP_Hu_jhwxmSz13vQplFGweaMBEVlFjsh_eBqED8KwGaokmw/exec";
+var RATINGS  = ["普通", "良い", "最高！"];
+var DOW_LBL  = ["日","月","火","水","木","金","土"];
+var STAMP    = "💮";
 
-    const app = {
-        state: {
-            viewDate: new Date(),
-            history: JSON.parse(localStorage.getItem('trainingHistoryV5')) || {},
-            tasks: JSON.parse(localStorage.getItem('trainingTasksV5')) || ["宿題", "音読", "音声計算", "素振り", "全力2分切り返し", "洗濯物"],
-            selectedRating: 2
-        },
+/* 称号マスター（本格・劇的） */
+var TITLES = [
+  { days:   0, icon: "🐣", name: "ひよっこ",           desc: "たまごからうまれたばかり！さあ修行だ！",     next:   1 },
+  { days:   1, icon: "🐥", name: "よちよち修行中",     desc: "1日できた！すごいぞ！",                     next:   3 },
+  { days:   3, icon: "🐰", name: "やるきまんまん",     desc: "3日つづいた！ウサギみたいにぴょんぴょん！", next:   7 },
+  { days:   7, icon: "🐯", name: "1週間トラ",          desc: "1しゅうかんやりきった！トラのちから！",     next:  14 },
+  { days:  14, icon: "🦊", name: "かしこいキツネ",     desc: "2週間！キツネみたいにかしこくなってきた！", next:  30 },
+  { days:  30, icon: "🦁", name: "ライオンのこころ",   desc: "1か月！もうライオンみたいにつよい！",       next:  50 },
+  { days:  50, icon: "🐉", name: "ドラゴンのめざめ",   desc: "50日！ドラゴンがめをさましてきたぞ！",     next: 100 },
+  { days: 100, icon: "⭐", name: "スーパースター",     desc: "100日！もうみんなのあこがれのスター！",     next: 200 },
+  { days: 200, icon: "🌈", name: "レインボーヒーロー", desc: "200日！にじをこえたヒーロー！",             next: 365 },
+  { days: 365, icon: "🏆", name: "でんせつの修行者",   desc: "1ねんかん！きみはもうでんせつだ！！！",     next: null }
+];
 
-        init: function() {
-            this.render();
-        },
+/* はげましメッセージ（完了後ランダム） */
+var CHEERS = [
+  "やったー！今日もかんぺき！💮",
+  "すごい！きみはさいきょうだ！💪",
+  "まいにちつづけてえらいぞー！🎉",
+  "今日もよくがんばりました！花まる！",
+  "どんどんつよくなってるね！✨",
+  "あきらめなかった！それがいちばんえらい！",
+  "修行かんりょう！今日もきみはヒーロー！🦸",
+  "コツコツつづけるきみがだいすき！🌟"
+];
 
-        save: function() {
-            localStorage.setItem('trainingTasksV5', JSON.stringify(this.state.tasks));
-            localStorage.setItem('trainingHistoryV5', JSON.stringify(this.state.history));
-            this.render();
-        },
+/* ============================================================
+   ユーティリティ
+============================================================ */
+function toDateStr(d) {
+  return d.getFullYear() + "-" +
+    String(d.getMonth() + 1).padStart(2, "0") + "-" +
+    String(d.getDate()).padStart(2, "0");
+}
 
-        getTodayStr: function(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        },
+function getTitle(totalDays) {
+  var t = TITLES[0];
+  for (var i = TITLES.length - 1; i >= 0; i--) {
+    if (totalDays >= TITLES[i].days) { t = TITLES[i]; break; }
+  }
+  return t;
+}
 
-        render: function() {
-            this.renderCalendar();
-            this.renderTasks();
-            this.renderSettings();
-            this.updateStreak();
-        },
+function randomCheer() {
+  return CHEERS[Math.floor(Math.random() * CHEERS.length)];
+}
 
-        renderCalendar: function() {
-            const year = this.state.viewDate.getFullYear();
-            const month = this.state.viewDate.getMonth();
-            document.getElementById('monthDisplay').innerText = `${year}年 ${month + 1}月`;
-            
-            const grid = document.getElementById('calendarGrid');
-            const labels = Array.from(grid.querySelectorAll('.day-label'));
-            grid.innerHTML = '';
-            labels.forEach(l => grid.appendChild(l));
+/* ============================================================
+   ストレージ
+============================================================ */
+var STORE_KEY = "shugyolog_v8";
 
-            const firstDay = new Date(year, month, 1).getDay();
-            const lastDate = new Date(year, month + 1, 0).getDate();
-            const todayStr = this.getTodayStr(new Date());
+function defaultData() {
+  return {
+    tasks:       ["宿題","音読","音声計算","素振り","全力2分切り返し","洗濯物"],
+    history:     {},
+    monthlyGoal: 20
+  };
+}
 
-            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+// 日付キーをYYYY-MM-DD形式に正規化
+function normalizeKey(k) {
+  // すでにYYYY-MM-DD形式ならそのまま返す
+  if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
+  // YYYY/MM/DD形式
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(k)) return k.replace(/\//g, "-");
+  // ISO形式（2026-03-21T...）
+  if (k.indexOf("T") !== -1) return k.split("T")[0];
+  // それ以外（Wed Mar 18...など）は捨てる
+  return null;
+}
 
-            for (let d = 1; d <= lastDate; d++) {
-                const dateObj = new Date(year, month, d);
-                const dateStr = this.getTodayStr(dateObj);
-                const dayEl = document.createElement('div');
-                dayEl.className = 'day';
-                if (dateStr === todayStr) dayEl.classList.add('today');
-                if (dateObj.getDay() === 0) dayEl.classList.add('sun');
-                if (dateObj.getDay() === 6) dayEl.classList.add('sat');
-                dayEl.innerHTML = `<span>${d}</span>`;
-                
-                if (this.state.history[dateStr]) {
-                    const s = document.createElement('span');
-                    s.className = 'stamp-mark';
-                    s.innerText = this.state.history[dateStr].icon || "💮";
-                    dayEl.appendChild(s);
-                    dayEl.onclick = () => this.showLogDetail(dateStr);
-                }
-                grid.appendChild(dayEl);
-            }
-        },
+// historyのキーを全部正規化してマージ（不正なキーは除外）
+function normalizeHistory(raw) {
+  var clean = {};
+  Object.keys(raw).forEach(function(k) {
+    var nk = normalizeKey(k);
+    if (nk && !clean[nk]) clean[nk] = raw[k];
+  });
+  return clean;
+}
 
-        renderTasks: function() {
-            const list = document.getElementById('taskList');
-            list.innerHTML = "";
-            this.state.tasks.forEach((task, i) => {
-                const div = document.createElement('div');
-                div.className = 'task-item';
-                div.innerHTML = `<input type="checkbox" onchange="this.parentElement.classList.toggle('checked', this.checked); app.checkBtn()"><span style="flex-grow:1; font-weight:bold;">${task}</span>`;
-                div.onclick = (e) => {
-                    if(e.target.tagName !== 'INPUT') {
-                        const ck = div.querySelector('input');
-                        ck.checked = !ck.checked;
-                        div.classList.toggle('checked', ck.checked);
-                        this.checkBtn();
-                    }
-                };
-                list.appendChild(div);
-            });
-            this.checkBtn();
-        },
+function loadData() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      var d = defaultData();
+      d.tasks       = p.tasks       || d.tasks;
+      d.history     = p.history ? normalizeHistory(p.history) : d.history;
+      d.monthlyGoal = p.monthlyGoal || d.monthlyGoal;
+      return d;
+    }
+  } catch(e) {}
+  return defaultData();
+}
 
-        checkBtn: function() {
-            const checks = document.querySelectorAll('.task-item input');
-            const allDone = checks.length > 0 && Array.from(checks).every(c => c.checked);
-            const todayStr = this.getTodayStr(new Date());
-            const isCurrentMonth = this.state.viewDate.getMonth() === new Date().getMonth();
-            
-            const btn = document.getElementById('completeBtn');
-            btn.disabled = !allDone || !!this.state.history[todayStr] || !isCurrentMonth;
-            document.getElementById('logInputs').style.display = this.state.history[todayStr] ? 'none' : 'block';
-        },
+function saveData(d) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(d)); } catch(e) {}
+}
 
-        updateStreak: function() {
-            let streak = 0, d = new Date();
-            while(this.state.history[this.getTodayStr(d)]) { streak++; d.setDate(d.getDate() - 1); }
-            document.getElementById('streakNum').innerText = streak;
-            return streak;
-        },
+/* ============================================================
+   アプリ
+============================================================ */
+var App = {
+  data:     null,
+  viewDate: null,
+  rating:   2,
 
-        setRating: function(val) {
-            this.state.selectedRating = val;
-            document.querySelectorAll('.rating-btn').forEach((btn, i) => btn.classList.toggle('active', i + 1 === val));
-        },
+  init: function() {
+    this.data     = loadData();
+    this.viewDate = new Date();
+    this.renderAll();
+    this.setupSwipe();
+  },
 
-        stampToday: async function() {
-            const streak = this.updateStreak() + 1;
-            // 継続日数でスタンプが進化！
-            let icon = "💮";
-            if (streak >= 30) icon = "👑";
-            else if (streak >= 14) icon = "💎";
-            else if (streak >= 7) icon = "🔥";
-            else if (streak >= 3) icon = "✨";
+  save: function() { saveData(this.data); },
 
-            const ratingText = ["普通", "良い", "最高！"][this.state.selectedRating - 1];
-            const todayStr = this.getTodayStr(new Date());
-            
-            const logData = {
-                date: todayStr,
-                icon: icon,
-                rating: ratingText,
-                memo: document.getElementById('memoInput').value || "（メモなし）",
-                streak: streak
-            };
+  renderAll: function() {
+    this.renderToday();
+    this.renderCalendar();
+    this.renderStats();
+    this.renderSettings();
+  },
 
-            // ローカル保存
-            this.state.history[todayStr] = logData;
-            document.getElementById('memoInput').value = "";
-            this.save();
+  /* ---------- 連続計算 ---------- */
+  calcStreak: function() {
+    var n = 0, d = new Date();
+    while (this.data.history[toDateStr(d)]) {
+      n++; d.setDate(d.getDate() - 1);
+    }
+    return n;
+  },
 
-            // スプレッドシートへ送信
-            document.getElementById('loading').style.display = 'flex';
-            try {
-                await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(logData) });
-                alert(`修行完了！現在 ${streak}日連続です！`);
-            } catch (e) {
-                alert("送信エラー。ネット環境を確認してください。");
-            }
-            document.getElementById('loading').style.display = 'none';
-        },
+  calcBest: function() {
+    var keys = Object.keys(this.data.history).sort();
+    var best = 0, cur = 0;
+    for (var i = 0; i < keys.length; i++) {
+      if (i === 0) { cur = 1; }
+      else {
+        var prev = new Date(keys[i-1]); prev.setDate(prev.getDate() + 1);
+        cur = (toDateStr(prev) === keys[i]) ? cur + 1 : 1;
+      }
+      if (cur > best) best = cur;
+    }
+    return best;
+  },
 
-        importFromGAS: async function() {
-            if(!confirm("シートから全データを同期しますか？\n現在のスマホ内の履歴は上書きされます。")) return;
-            document.getElementById('loading').style.display = 'flex';
-            try {
-                const res = await fetch(GAS_URL);
-                const rawData = await res.json();
-                
-                // 履歴オブジェクトを再構築
-                const newHistory = {};
-                rawData.forEach(d => {
-                    newHistory[d.date] = d;
-                });
-                this.state.history = newHistory;
-                
-                this.render();
-                alert("同期が完了しました！");
-                this.toggleModal('settingsModal', false);
-            } catch (e) {
-                alert("読み込みエラー。URLを確認してください。");
-            }
-            document.getElementById('loading').style.display = 'none';
-        },
+  calcTotalDays: function() {
+    return Object.keys(this.data.history).length;
+  },
 
-        showLogDetail: function(dateStr) {
-            const log = this.state.history[dateStr];
-            document.getElementById('detailDate').innerText = dateStr;
-            document.getElementById('detailStamp').innerText = log.icon;
-            document.getElementById('detailRating').innerText = `評価: ${log.rating}`;
-            document.getElementById('detailMemo').innerText = log.memo;
-            this.toggleModal('logDetailModal', true);
-        },
+  calcThisMonth: function() {
+    var now = new Date();
+    var ym  = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
+    var keys = Object.keys(this.data.history);
+    var n = 0;
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].indexOf(ym) === 0) n++;
+    }
+    return n;
+  },
 
-        changeMonth: function(diff) { this.state.viewDate.setMonth(this.state.viewDate.getMonth() + diff); this.render(); },
-        toggleModal: function(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; },
+  calcLastWeek: function() {
+    var n = 0;
+    for (var i = 1; i <= 7; i++) {
+      var d = new Date(); d.setDate(d.getDate() - i);
+      if (this.data.history[toDateStr(d)]) n++;
+    }
+    return n;
+  },
 
-        renderSettings: function() {
-            const editor = document.getElementById('taskEditorList');
-            editor.innerHTML = "";
-            this.state.tasks.forEach((task, i) => {
-                const div = document.createElement('div');
-                div.style.display = "flex"; div.style.marginBottom = "10px";
-                div.innerHTML = `<input type="text" style="flex-grow:1; padding:12px; border:2px solid #eee; border-radius:12px; outline:none;" value="${task}" onchange="app.state.tasks[${i}]=this.value; app.save()"><button onclick="app.state.tasks.splice(${i}, 1); app.save()" style="margin-left:8px; background:#ff7675; color:white; border:none; border-radius:12px; padding:0 18px; font-weight:bold;">✕</button>`;
-                editor.appendChild(div);
-            });
-        },
-        addNewTask: function() { this.state.tasks.push("新しい修行"); this.save(); }
+  calcThisWeek: function() {
+    var n = 0;
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(); d.setDate(d.getDate() - i);
+      if (this.data.history[toDateStr(d)]) n++;
+    }
+    return n;
+  },
+
+  /* ---------- 今日タブ ---------- */
+  renderToday: function() {
+    var today  = new Date();
+    var ts     = toDateStr(today);
+    var streak = this.calcStreak();
+
+    /* アラートエリア */
+    var alertHtml = "";
+
+    /* 危機アラート：昨日やっていて今日まだの場合 */
+    var yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    var doneYesterday = !!this.data.history[toDateStr(yesterday)];
+    var doneToday     = !!this.data.history[ts];
+    if (doneYesterday && !doneToday && streak > 0) {
+      alertHtml +=
+        '<div class="alert-crisis">' +
+          '<div class="alert-crisis-icon">⚠️</div>' +
+          '<div class="alert-crisis-text">' + streak + '日連続が危ない！<br>今日修行しないと連続記録がリセットされるぞ！</div>' +
+        '</div>';
+    }
+
+    /* 週間レポート：日曜日に表示 */
+    if (today.getDay() === 0) {
+      var thisWeek = this.calcThisWeek();
+      var lastWeek = this.calcLastWeek();
+      var diff     = thisWeek - lastWeek;
+      var diffText = diff > 0 ? "先週より" + diff + "日多い！🎉" : diff < 0 ? "先週より" + Math.abs(diff) + "日少なかった" : "先週と同じ日数！";
+      alertHtml +=
+        '<div class="alert-weekly">' +
+          '<div class="alert-weekly-icon">📊</div>' +
+          '<div class="alert-weekly-text">今週の修行: ' + thisWeek + '/7日<br>' + diffText + '</div>' +
+        '</div>';
+    }
+
+    document.getElementById("alertArea").innerHTML = alertHtml;
+
+    /* 日付・週ドット */
+    document.getElementById("todayLabel").textContent =
+      today.getFullYear() + "年" + (today.getMonth()+1) + "月" +
+      today.getDate() + "日（" + DOW_LBL[today.getDay()] + "）";
+
+    var dotsEl = document.getElementById("weekDots");
+    dotsEl.innerHTML = "";
+    for (var i = 6; i >= 0; i--) {
+      var d2 = new Date(); d2.setDate(d2.getDate() - i);
+      var dot = document.createElement("div");
+      dot.className = "w-dot" +
+        (this.data.history[toDateStr(d2)] ? " done" : "") +
+        (i === 0 ? " cur" : "");
+      dotsEl.appendChild(dot);
+    }
+
+    /* 月間目標カード */
+    var thisMonth = this.calcThisMonth();
+    var goal      = this.data.monthlyGoal;
+    var pct       = goal > 0 ? Math.min(100, Math.round(thisMonth / goal * 100)) : 0;
+    var dim       = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+    var remaining = dim - today.getDate() + 1; // 今日を含む残り日数
+    var needed    = Math.max(0, goal - thisMonth);
+    var goalMsg   = pct >= 100
+      ? "🎉 今月の目標達成！すごい！"
+      : needed > 0
+        ? "あと" + needed + "日！今月残り" + remaining + "日！"
+        : "今月の目標はクリア！🎉";
+
+    document.getElementById("goalCardArea").innerHTML =
+      '<div class="goal-card">' +
+        '<div class="goal-header">' +
+          '<div class="goal-title">📅 今月の目標</div>' +
+          '<button class="goal-edit-btn" onclick="App.switchTab(\'settings\')">変更</button>' +
+        '</div>' +
+        '<div class="goal-nums">' +
+          '<div class="goal-current">' + thisMonth + '</div>' +
+          '<div class="goal-sep">/</div>' +
+          '<div class="goal-target">' + goal + '</div>' +
+          '<div class="goal-unit">日</div>' +
+        '</div>' +
+        '<div class="goal-bar-track"><div class="goal-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="goal-msg">' + goalMsg + '</div>' +
+      '</div>';
+
+    /* タスクリスト */
+    var listEl = document.getElementById("taskList");
+    listEl.innerHTML = "";
+    for (var j = 0; j < this.data.tasks.length; j++) {
+      (function(task) {
+        var card = document.createElement("div");
+        card.className = "task-card";
+        card.innerHTML = '<div class="task-check">✓</div><div class="task-name">' + task + '</div>';
+        card.addEventListener("click", function() {
+          card.classList.toggle("done");
+          App.checkComplete();
+        });
+        listEl.appendChild(card);
+      })(this.data.tasks[j]);
+    }
+
+    /* 完了済みか */
+    var log = this.data.history[ts];
+    if (log) {
+      document.getElementById("inputArea").style.display = "none";
+      var doneEl = document.getElementById("doneArea");
+      doneEl.style.display = "block";
+      doneEl.innerHTML =
+        '<div class="done-card">' +
+          '<span class="done-stamp">' + STAMP + '</span>' +
+          '<div class="done-title">今日の修行完了！</div>' +
+          '<div class="done-sub">評価: ' + log.rating + ' ｜ ' + log.streak + '日連続</div>' +
+          '<div class="done-encourage">' + (log.cheer || "") + '</div>' +
+          '<div class="done-memo">' + log.memo + '</div>' +
+        '</div>';
+    } else {
+      document.getElementById("inputArea").style.display = "block";
+      document.getElementById("doneArea").style.display  = "none";
+      this.checkComplete();
+    }
+  },
+
+  checkComplete: function() {
+    var cards   = document.querySelectorAll(".task-card");
+    var allDone = cards.length > 0;
+    for (var i = 0; i < cards.length; i++) {
+      if (!cards[i].classList.contains("done")) { allDone = false; break; }
+    }
+    var btn = document.getElementById("completeBtn");
+    if (btn) btn.disabled = !allDone;
+  },
+
+  setRating: function(val) {
+    this.rating = val;
+    for (var i = 1; i <= 3; i++) {
+      document.getElementById("r" + i).classList.toggle("active", i === val);
+    }
+  },
+
+  complete: function() {
+    var streak = this.calcStreak() + 1;
+    var ts     = toDateStr(new Date());
+    var cheer  = randomCheer();
+    var log    = {
+      date:   ts,
+      icon:   STAMP,
+      rating: RATINGS[this.rating - 1],
+      memo:   document.getElementById("memoInput").value.trim() || "（メモなし）",
+      streak: streak,
+      cheer:  cheer
     };
+    this.data.history[ts] = log;
+    document.getElementById("memoInput").value = "";
+    this.save();
+    this.renderAll();
+    this.fireConfetti();
 
-    window.onload = () => app.init();
+    document.getElementById("loading").classList.add("on");
+    fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(log)
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(r) {
+        if (r.status !== "ok") console.warn("GAS error:", r);
+      })
+      .catch(function(e) { console.warn("送信失敗:", e); })
+      .finally(function() {
+        document.getElementById("loading").classList.remove("on");
+      });
+  },
+
+  /* ---------- カレンダー ---------- */
+  renderCalendar: function() {
+    var y = this.viewDate.getFullYear();
+    var m = this.viewDate.getMonth();
+    document.getElementById("calLabel").textContent = y + "年 " + (m+1) + "月";
+
+    var grid    = document.getElementById("calGrid");
+    var headers = Array.prototype.slice.call(grid.children, 0, 7);
+    grid.innerHTML = "";
+    headers.forEach(function(h) { grid.appendChild(h); });
+
+    var firstDow = new Date(y, m, 1).getDay();
+    var lastDate = new Date(y, m+1, 0).getDate();
+    var todayStr = toDateStr(new Date());
+
+    for (var i = 0; i < firstDow; i++) grid.appendChild(document.createElement("div"));
+
+    for (var d = 1; d <= lastDate; d++) {
+      var ds   = toDateStr(new Date(y, m, d));
+      var dow  = new Date(y, m, d).getDay();
+      var cell = document.createElement("div");
+      cell.className = "cal-day" +
+        (dow === 0 ? " sun" : "") + (dow === 6 ? " sat" : "") +
+        (ds === todayStr ? " today" : "");
+
+      var log = this.data.history[ds];
+      if (log) {
+        cell.classList.add("clickable");
+        cell.innerHTML = '<span class="day-n">' + d + '</span><span class="cal-stamp">' + STAMP + '</span>';
+        (function(ds2) { cell.addEventListener("click", function() { App.showDetail(ds2); }); })(ds);
+      } else {
+        cell.innerHTML = '<span class="day-n">' + d + '</span>';
+      }
+      grid.appendChild(cell);
+    }
+  },
+
+  changeMonth: function(diff) { this.viewDate.setMonth(this.viewDate.getMonth() + diff); this.renderCalendar(); },
+  goToday:     function()     { this.viewDate = new Date(); this.renderCalendar(); this.switchTab("today"); },
+
+  showDetail: function(ds) {
+    var log = this.data.history[ds];
+    if (!log) return;
+    document.getElementById("detailContent").innerHTML =
+      '<div class="detail-date">' + ds + '</div>' +
+      '<span class="detail-stamp">' + STAMP + '</span>' +
+      '<span class="detail-streak-badge">🔥 ' + log.streak + '日連続達成！</span>' +
+      '<div class="detail-rating">評価: ' + log.rating + '</div>' +
+      '<div class="detail-memo">' + log.memo + '</div>';
+    document.getElementById("overlay").classList.add("open");
+  },
+
+  closeDetail: function() { document.getElementById("overlay").classList.remove("open"); },
+
+  /* ---------- 成績 ---------- */
+  renderStats: function() {
+    var h     = this.data.history;
+    var keys  = Object.keys(h).sort();
+    var total = keys.filter(function(k,i,a){return a.indexOf(k)===i;}).length;
+    var best  = this.calcBest();
+    var cur   = this.calcStreak();
+
+    /* 称号 */
+    var titleData = getTitle(total);
+    var nextDays  = titleData.next;
+    var titlePct  = 0;
+    var titleNext = "";
+    if (nextDays !== null) {
+      var prevDays = titleData.days;
+      titlePct = Math.min(100, Math.round((total - prevDays) / (nextDays - prevDays) * 100));
+      /* 次の称号を探す */
+      for (var ti = 0; ti < TITLES.length; ti++) {
+        if (TITLES[ti].days === nextDays) {
+          titleNext = "次の称号「" + TITLES[ti].name + "」まであと" + (nextDays - total) + "日";
+          break;
+        }
+      }
+    } else {
+      titlePct  = 100;
+      titleNext = "最高の称号を手に入れた！伝説の修行者！";
+    }
+
+    /* 今月 */
+    var now    = new Date();
+    var ym     = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
+    var thisM  = 0;
+    for (var ki = 0; ki < keys.length; ki++) { if (keys[ki].indexOf(ym) === 0) thisM++; }
+    var dim    = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    var mRate  = dim ? Math.round(thisM / dim * 100) : 0;
+
+    /* ヒートマップ */
+    var cells = "";
+    var dowHeader = "";
+    for (var dl = 0; dl < 7; dl++) dowHeader += '<div style="flex:1;text-align:center">' + DOW_LBL[dl] + '</div>';
+    for (var hi = 62; hi >= 0; hi--) {
+      var hd = new Date(); hd.setDate(hd.getDate() - hi);
+      cells += '<div class="heat-cell' + (h[toDateStr(hd)] ? " on" : "") + '"></div>';
+    }
+
+    document.getElementById("statsWrap").innerHTML =
+      /* 称号カード */
+      '<div class="title-card">' +
+        '<div class="title-label">現在の称号</div>' +
+        '<span class="title-icon">' + titleData.icon + '</span>' +
+        '<div class="title-name">' + titleData.name + '</div>' +
+        '<div class="title-desc">' + titleData.desc + '</div>' +
+        '<div class="title-next">' + titleNext + '</div>' +
+        '<div class="title-progress-track"><div class="title-progress-fill" style="width:' + titlePct + '%"></div></div>' +
+      '</div>' +
+
+      /* 数字 */
+      '<div class="stat-card">' +
+        '<div class="stat-card-title">📈 総合成績</div>' +
+        '<div class="num-row">' +
+          '<div class="num-box"><div class="num-big">' + total + '</div><div class="num-label">総修行日数</div></div>' +
+          '<div class="num-box"><div class="num-big">' + mRate + '%</div><div class="num-label">今月達成率</div></div>' +
+          '<div class="num-box"><div class="num-big">' + best + '</div><div class="num-label">最長連続</div></div>' +
+        '</div>' +
+      '</div>' +
+
+      /* ヒートマップ */
+      '<div class="stat-card">' +
+        '<div class="stat-card-title">🔥 最近9週間</div>' +
+        '<div style="display:flex;gap:2px;font-size:0.6rem;color:var(--text2);margin-bottom:5px;">' + dowHeader + '</div>' +
+        '<div class="heatmap">' + cells + '</div>' +
+        '<div class="heat-legend">少ない <div class="leg" style="background:var(--border)"></div><div class="leg" style="background:var(--accent)"></div> 多い</div>' +
+      '</div>';
+  },
+
+  /* ---------- 設定 ---------- */
+  renderSettings: function() {
+    var taskRows = "";
+    for (var i = 0; i < this.data.tasks.length; i++) {
+      taskRows +=
+        '<div class="task-edit-row">' +
+          '<input class="task-edit-input" value="' + this.data.tasks[i].replace(/"/g,"&quot;") + '" ' +
+          'onchange="App.data.tasks[' + i + ']=this.value; App.save();">' +
+          '<button class="del-btn" onclick="App.deleteTask(' + i + ')">✕</button>' +
+        '</div>';
+    }
+
+    document.getElementById("settingsWrap").innerHTML =
+      '<div class="settings-card">' +
+        '<div class="settings-card-title">🎯 今月の目標日数</div>' +
+        '<div class="settings-body">' +
+          '<div class="goal-input-row">' +
+            '<input class="goal-num-input" id="goalInput" type="number" min="1" max="31" value="' + this.data.monthlyGoal + '">' +
+            '<button class="goal-save-btn" onclick="App.saveGoal()">この目標に設定する</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="settings-card">' +
+        '<div class="settings-card-title">📝 修行の項目</div>' +
+        '<div class="settings-body">' +
+          taskRows +
+          '<button class="add-btn" onclick="App.addTask()">＋ 修行を追加</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="settings-card">' +
+        '<div class="settings-card-title">☁️ クラウド同期</div>' +
+        '<div class="settings-body">' +
+          '<p style="font-size:0.78rem;color:var(--text2);line-height:1.5;">シートのデータをこのアプリに取り込みます。</p>' +
+          '<button class="sync-btn" onclick="App.syncFromGAS()">☁️ シートのデータを同期する</button>' +
+        '</div>' +
+      '</div>';
+  },
+
+  saveGoal: function() {
+    var val = parseInt(document.getElementById("goalInput").value, 10);
+    if (!val || val < 1 || val > 31) { alert("1〜31の数字を入れてください"); return; }
+    this.data.monthlyGoal = val;
+    this.save();
+    this.renderAll();
+    alert("目標を" + val + "日に設定しました！");
+  },
+
+  addTask: function() {
+    this.data.tasks.push("新しい修行");
+    this.save(); this.renderSettings(); this.renderToday();
+  },
+
+  deleteTask: function(i) {
+    if (!confirm("「" + this.data.tasks[i] + "」を削除しますか？")) return;
+    this.data.tasks.splice(i, 1);
+    this.save(); this.renderSettings(); this.renderToday();
+  },
+
+  /* ---------- GAS同期 ---------- */
+  syncFromGAS: function() {
+    var self = this;
+    if (!confirm("シートのデータをこのアプリに合体させますか？")) return;
+    document.getElementById("loading").classList.add("on");
+    fetch(GAS_URL)
+      .then(function(res) { return res.json(); })
+      .then(function(arr) {
+        if (Array.isArray(arr)) {
+          arr.forEach(function(d) {
+            var k = normalizeKey(String(d.date || ""));
+            if (k) {
+              self.data.history[k] = {
+                icon:   STAMP,
+                rating: d.rating || "普通",
+                memo:   d.memo   || "（メモなし）",
+                streak: d.streak || 1,
+                cheer:  d.cheer  || ""
+              };
+            }
+          });
+          self.save();
+          self.renderAll();
+          alert("同期完了！");
+        }
+      })
+      .catch(function() { alert("読み込みエラー。GASのdoGet関数とURLを確認してください。"); })
+      .finally(function() { document.getElementById("loading").classList.remove("on"); });
+  },
+
+  /* ---------- タブ ---------- */
+  switchTab: function(name) {
+    var tabs = ["today","calendar","stats","settings"];
+    for (var i = 0; i < tabs.length; i++) {
+      document.getElementById("view-" + tabs[i]).classList.toggle("active", tabs[i] === name);
+      document.getElementById("tab-"  + tabs[i]).classList.toggle("active", tabs[i] === name);
+    }
+  },
+
+  /* ---------- 紙吹雪 ---------- */
+  fireConfetti: function() {
+    var cv  = document.getElementById("confetti");
+    var ctx = cv.getContext("2d");
+    cv.width = window.innerWidth; cv.height = window.innerHeight;
+    var COLORS = ["#ff6b35","#ffcc02","#7c5cfc","#06d6a0","#ff4d6d","#5c9eff"];
+    var pieces = [];
+    for (var i = 0; i < 120; i++) {
+      pieces.push({ x: Math.random()*cv.width, y: -10, r: Math.random()*7+3, a: 0,
+        as: Math.random()*0.08+0.04, color: COLORS[Math.floor(Math.random()*COLORS.length)] });
+    }
+    var f = 0;
+    function draw() {
+      if (f++ > 180) { ctx.clearRect(0,0,cv.width,cv.height); return; }
+      ctx.clearRect(0,0,cv.width,cv.height);
+      for (var i = 0; i < pieces.length; i++) {
+        var p = pieces[i];
+        p.a += p.as; p.y += 3.5+p.r/4; p.x += Math.sin(p.a)*2;
+        ctx.beginPath(); ctx.lineWidth = p.r/2; ctx.strokeStyle = p.color;
+        ctx.moveTo(p.x+Math.sin(p.a)*p.r, p.y); ctx.lineTo(p.x, p.y+p.r); ctx.stroke();
+      }
+      requestAnimationFrame(draw);
+    }
+    draw();
+  },
+
+  /* ---------- スワイプ ---------- */
+  setupSwipe: function() {
+    var sx = 0;
+    var TABS = ["today","calendar","stats","settings"];
+    document.querySelector(".app").addEventListener("touchstart", function(e) {
+      sx = e.touches[0].clientX;
+    }, { passive: true });
+    document.querySelector(".app").addEventListener("touchend", function(e) {
+      var dx = e.changedTouches[0].clientX - sx;
+      if (Math.abs(dx) < 60) return;
+      var cur = -1;
+      for (var i = 0; i < TABS.length; i++) {
+        if (document.getElementById("view-"+TABS[i]).classList.contains("active")) { cur = i; break; }
+      }
+      if (dx < 0 && cur < TABS.length-1) App.switchTab(TABS[cur+1]);
+      if (dx > 0 && cur > 0)             App.switchTab(TABS[cur-1]);
+    }, { passive: true });
+  }
+};
+
+window.onload = function() {
+  App.init();
+  // ページを開いたとき自動でGASから同期（すでにある日付は上書きしない）
+  fetch(GAS_URL)
+    .then(function(res) { return res.json(); })
+    .then(function(arr) {
+      if (!Array.isArray(arr)) return;
+      var updated = false;
+      arr.forEach(function(d) {
+        var k = normalizeKey(String(d.date || ""));
+        if (k && !App.data.history[k]) {
+          App.data.history[k] = {
+            icon:   "💮",
+            rating: d.rating || "普通",
+            memo:   d.memo   || "（メモなし）",
+            streak: d.streak || 1,
+            cheer:  d.cheer  || ""
+          };
+          updated = true;
+        }
+      });
+      if (updated) { App.save(); App.renderAll(); }
+    })
+    .catch(function() {}); // 失敗しても何もしない
+};
 </script>
 </body>
 </html>
